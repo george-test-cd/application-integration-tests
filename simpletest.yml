@@ -1,0 +1,50 @@
+---
+- hosts: application
+  vars:
+    application_url: "http://127.0.0.1:8080"
+  tasks:
+  - name: Add new counter
+    uri:
+      url: "{{ application_url }}/counter"
+      method: PUT
+    register: put_res
+    failed_when: put_res.json.value != 0  
+
+  - name: Increase counter
+    uri:
+      url: "{{ application_url }}/counter/{{ put_res.json.id }}"
+      method: PUT
+    register: increase_res
+    failed_when: increase_res.json.value|int != item|int
+    with_sequence: count=4  
+
+  - name: Get counter
+    uri:
+      url: "{{ application_url }}/counter/{{ put_res.json.id }}"
+    register: counter_res
+    failed_when: counter_res.json.value != 4
+
+- hosts: web
+  vars:
+    application_url: "http://127.0.0.1"
+  tasks:
+  - name: Add new counter
+    uri:
+      url: "{{ application_url }}/counter"
+      method: PUT
+    register: put_res
+    failed_when: put_res.json.value != 0  
+
+  - name: Increase counter
+    uri:
+      url: "{{ application_url }}/counter/{{ put_res.json.id }}"
+      method: PUT
+    register: increase_res
+    failed_when: increase_res.json.value|int != item|int
+    with_sequence: count=4  
+
+  - name: Get counter
+    uri:
+      url: "{{ application_url }}/counter/{{ put_res.json.id }}"
+    register: counter_res
+    failed_when: counter_res.json.value != 4
